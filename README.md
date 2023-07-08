@@ -1,6 +1,6 @@
 # ghboard 🦑
 
-This is a GitHub dashboard written in [Dioxus SSR](https://dioxuslabs.com/), hosted in [Shuttle](https://www.shuttle.rs/) and powered by the GitHub API.
+GitHub dashboard written in Rust🦀, made using [Dioxus SSR 🧬](https://dioxuslabs.com/), hosted in [Shuttle 🚀](https://www.shuttle.rs/) and powered by the [GitHub GraphQL API 🦑](https://docs.github.com/en/graphql).
 
 [⚠️ Work in progress ⚠️]
 
