@@ -9,7 +9,7 @@ This is a GitHub dashboard written in [Dioxus SSR](https://dioxuslabs.com/), hos
 Just replace your GitHub username to the end of the URL:
 
 ```
-https://ghboard.shuttleapp.rs/user/YOUR_GITHUB_USERNAME
+https://ghboard.shuttleapp.rs/user/<YOUR_GITHUB_USERNAME>
 ```
 
 Example:
