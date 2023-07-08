@@ -11,6 +11,7 @@ chrono = { version = "0.4.26", features = ["serde"] }
 dioxus = "0.3.2"
 dioxus-hot-reload = "0.1.1"
 dioxus-ssr = "0.3.0"
+dotenv = "0.15.0"
 http = "0.2.9"
 octocrab = "0.25.1"
 secrecy = "0.8.0"

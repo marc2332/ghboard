@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, SecondsFormat, Timelike, Utc};
-use octocrab::Octocrab;
+use octocrab::{Error, Octocrab};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -46,7 +46,7 @@ pub fn new_date_year(year: i32) -> DateTime<Utc> {
         .unwrap()
 }
 
-pub async fn get_join_date(client: &Octocrab, user: &str) -> DateTime<Utc> {
+pub async fn get_join_date(client: &Octocrab, user: &str) -> Result<DateTime<Utc>, Error> {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Response {
         data: Data,
@@ -76,10 +76,9 @@ pub async fn get_join_date(client: &Octocrab, user: &str) -> DateTime<Utc> {
     "
                 )
         }))
-        .await
-        .unwrap();
+        .await?;
 
-    response.data.user.createdAt
+    Ok(response.data.user.createdAt)
 }
 
 pub async fn get_calendar(
@@ -139,4 +138,28 @@ pub async fn get_calendar(
         .user
         .contributionsCollection
         .contributionCalendar
+}
+
+pub fn get_streak(years: &[(ContributionCalendar, i32)], now: DateTime<Utc>) -> i32 {
+    let mut streak = 0;
+
+    for (year, year_num) in years.iter().rev() {
+        let mut day_c = 0;
+        for week in &year.weeks {
+            for day in &week.contributionDays {
+                if day_c as u32 > now.ordinal0() && *year_num == now.year() {
+                    break;
+                }
+
+                streak += 1;
+                if day.contributionCount == 0 && streak < 500 {
+                    streak = 0;
+                }
+
+                day_c += 1;
+            }
+        }
+    }
+
+    streak
 }

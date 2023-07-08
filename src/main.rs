@@ -1,16 +1,25 @@
 mod dashboard;
 
+use std::{env, net};
+
 use chrono::{Datelike, Utc};
 use dashboard::*;
 
-use axum::{extract::Path, response::Html, routing::get, Router};
+use axum::{
+    extract::{Path, State},
+    response::{self, ErrorResponse, Html},
+    routing::get,
+    Router,
+};
 use dioxus::prelude::*;
+use dotenv::dotenv;
 use octocrab::Octocrab;
 
 struct AppProps {
     collections: Vec<(ContributionCalendar, i32)>,
     last_year_collection: ContributionCalendar,
     streak: i32,
+    user: String,
 }
 
 fn app(cx: Scope<AppProps>) -> Element {
@@ -19,16 +28,20 @@ fn app(cx: Scope<AppProps>) -> Element {
             src: "https://cdn.tailwindcss.com"
         }
         div {
-            class: "h-full bg-zinc-900 overflow-auto",
+            class: "h-full bg-zinc-900 overflow-auto text-white",
             div {
                 class: "h-full flex justify-center mx-auto",
                 div {
+                    h1 {
+                        class: "p-2",
+                        "User: {cx.props.user}"
+                    }
                     h2 {
-                        class: "text-white p-2",
+                        class: "p-2",
                         "Current streak: {cx.props.streak}"
                     }
                     h3 {
-                        class: "text-white p-2",
+                        class: "p-2",
                         "{cx.props.last_year_collection.totalContributions} contributions in the last year"
                     }
                     Calendar {
@@ -37,7 +50,7 @@ fn app(cx: Scope<AppProps>) -> Element {
                     for (collection, year) in &cx.props.collections {
                         rsx!(
                             h3 {
-                                class: "text-white p-2",
+                                class: "p-2",
                                 "{collection.totalContributions} contributions in {year}"
                             }
                             Calendar {
@@ -104,27 +117,33 @@ fn Day(cx: Scope, day: GhDay) -> Element {
 
 #[tokio::main]
 async fn main() {
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
-    println!("listening on http://{}", addr);
+    dotenv().ok();
+    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN env variable is required");
+
+    let addr = net::SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Listening on http://{}", addr);
 
     axum::Server::bind(&addr)
         .serve(
             Router::new()
                 .route("/:user", get(app_endpoint))
+                .with_state(token)
                 .into_make_service(),
         )
         .await
         .unwrap();
 }
 
-async fn app_endpoint(Path(user): Path<String>) -> Html<String> {
-    let token = std::env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN env variable is required");
-
+async fn app_endpoint(
+    State(token): State<String>,
+    Path(user): Path<String>,
+) -> response::Result<Html<String>> {
     let client = Octocrab::builder().personal_token(token).build().unwrap();
 
     let now = Utc::now();
     let joined = get_join_date(&client, &user)
         .await
+        .map_err(|_| ErrorResponse::from("Something went wrong, try again."))?
         .with_month0(0)
         .unwrap()
         .with_day0(0)
@@ -133,8 +152,6 @@ async fn app_endpoint(Path(user): Path<String>) -> Html<String> {
     let one_year_ago = now.with_year(now.year() - 1).unwrap();
 
     let mut years = Vec::new();
-
-    let mut streak = 0;
 
     for year_num in 0..years_since_joined + 1 {
         let year = joined.year() + year_num;
@@ -147,23 +164,7 @@ async fn app_endpoint(Path(user): Path<String>) -> Html<String> {
         years.insert(0, (year_data, year));
     }
 
-    for (year, year_num) in years.iter().rev() {
-        let mut day_c = 0;
-        for week in &year.weeks {
-            for day in &week.contributionDays {
-                if day_c as u32 > now.ordinal0() && *year_num == now.year() {
-                    break;
-                }
-
-                streak += 1;
-                if day.contributionCount == 0 && streak < 500 {
-                    streak = 0;
-                }
-
-                day_c += 1;
-            }
-        }
-    }
+    let streak = get_streak(&years, now);
 
     let last_year_collection = get_calendar(&client, &user, one_year_ago, now).await;
 
@@ -173,8 +174,10 @@ async fn app_endpoint(Path(user): Path<String>) -> Html<String> {
             collections: years,
             last_year_collection,
             streak,
+            user,
         },
     );
     let _ = app.rebuild();
-    Html(dioxus_ssr::render(&app))
+
+    Ok(Html(dioxus_ssr::render(&app)))
 }
