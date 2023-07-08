@@ -127,9 +127,19 @@ fn Day(cx: Scope, day: GhDay) -> Element {
         _ => "bg-zinc-950",
     };
 
+    let day_name = match day.weekday {
+        0 => "Monday",
+        1 => "Tuesday",
+        2 => "Wednesday",
+        3 => "Thursday",
+        4 => "Friday",
+        5 => "Saturday",
+        _ => "Sunday"
+    };
+
     render!(div {
         class: "{color} w-[10px] h-[10px] m-2 rounded-sm",
-        title: "{day.contributionCount} {day.weekday} {day.date}"
+        title: "{day.contributionCount} contributions on {day_name}, {day.date}"
     })
 }
 
