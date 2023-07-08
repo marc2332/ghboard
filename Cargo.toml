@@ -1,5 +1,5 @@
 [package]
-name = "github-dashboard"
+name = "ghboard"
 version = "0.1.0"
 edition = "2021"
 
