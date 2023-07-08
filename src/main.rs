@@ -33,12 +33,20 @@ fn app(cx: Scope<AppProps>) -> Element {
                 class: "h-full flex justify-center mx-auto",
                 div {
                     h1 {
-                        class: "p-2",
-                        "User: {cx.props.user}"
+                        class: "p-2 text-2xl",
+                        "{cx.props.user}"
                     }
                     h2 {
                         class: "p-2",
                         "Current streak: {cx.props.user_data.streak}"
+                    }
+                    b {
+                        class: "p-2",
+                        "Don't forget to star the ",
+                        a {
+                            href: "https://github.com/marc2332/ghboard",
+                            "repository ⭐"
+                        }
                     }
                     h3 {
                         class: "p-2",
