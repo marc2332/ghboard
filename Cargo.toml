@@ -18,3 +18,8 @@ secrecy = "0.8.0"
 serde = "1.0.166"
 serde_json = "1.0.100"
 tokio = { version = "1.29.1", features = ["full"] }
+shuttle-axum = "0.20.0"
+shuttle-runtime = "0.20.0"
+shuttle-secrets = "0.20.0"
+shuttle-persist = "0.20.0"
+tracing = "0.1.37"

@@ -1,9 +1,11 @@
 mod dashboard;
 
-use std::{env, net};
-
-use chrono::{Datelike, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use dashboard::*;
+use serde::{Deserialize, Serialize};
+use shuttle_persist::PersistInstance;
+use shuttle_secrets::SecretStore;
+use tracing::info;
 
 use axum::{
     extract::{Path, State},
@@ -16,9 +18,7 @@ use dotenv::dotenv;
 use octocrab::Octocrab;
 
 struct AppProps {
-    collections: Vec<(ContributionCalendar, i32)>,
-    last_year_collection: ContributionCalendar,
-    streak: i32,
+    user_data: UserData,
     user: String,
 }
 
@@ -38,16 +38,16 @@ fn app(cx: Scope<AppProps>) -> Element {
                     }
                     h2 {
                         class: "p-2",
-                        "Current streak: {cx.props.streak}"
+                        "Current streak: {cx.props.user_data.streak}"
                     }
                     h3 {
                         class: "p-2",
-                        "{cx.props.last_year_collection.totalContributions} contributions in the last year"
+                        "{cx.props.user_data.last_year.totalContributions} contributions in the last year"
                     }
                     Calendar {
-                        collection: cx.props.last_year_collection.clone(),
+                        collection: cx.props.user_data.last_year.clone(),
                     },
-                    for (collection, year) in &cx.props.collections {
+                    for (collection, year) in &cx.props.user_data.years {
                         rsx!(
                             h3 {
                                 class: "p-2",
@@ -115,33 +115,44 @@ fn Day(cx: Scope, day: GhDay) -> Element {
     })
 }
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN env variable is required");
-
-    let addr = net::SocketAddr::from(([127, 0, 0, 1], 3000));
-    println!("Listening on http://{}", addr);
-
-    axum::Server::bind(&addr)
-        .serve(
-            Router::new()
-                .route("/:user", get(app_endpoint))
-                .with_state(token)
-                .into_make_service(),
-        )
-        .await
-        .unwrap();
+#[derive(Clone)]
+struct ApiState {
+    persist: PersistInstance,
+    token: String,
 }
 
-async fn app_endpoint(
-    State(token): State<String>,
-    Path(user): Path<String>,
-) -> response::Result<Html<String>> {
+#[shuttle_runtime::main]
+async fn axum(
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
+    #[shuttle_persist::Persist] persist: PersistInstance,
+) -> shuttle_axum::ShuttleAxum {
+    dotenv().ok();
+    let token = secret_store
+        .get("GITHUB_TOKEN")
+        .expect("GITHUB_TOKEN env variable is required");
+
+    let state = ApiState { token, persist };
+
+    let router = Router::new()
+        .route("/user/:user", get(app_endpoint))
+        .with_state(state);
+
+    Ok(router.into())
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct UserData {
+    created_at: DateTime<Utc>,
+    years: Vec<(ContributionCalendar, i32)>,
+    last_year: ContributionCalendar,
+    streak: i32,
+}
+
+async fn get_user_data(user: &str, token: String) -> Result<UserData, ErrorResponse> {
     let client = Octocrab::builder().personal_token(token).build().unwrap();
 
     let now = Utc::now();
-    let joined = get_join_date(&client, &user)
+    let joined = get_join_date(&client, user)
         .await
         .map_err(|_| ErrorResponse::from("Something went wrong, try again."))?
         .with_month0(0)
@@ -159,21 +170,60 @@ async fn app_endpoint(
         let from = new_date_year(year);
         let to = from.with_month(12).unwrap().with_day(31).unwrap();
 
-        let year_data = get_calendar(&client, &user, from, to).await;
+        let year_data = get_calendar(&client, user, from, to).await;
 
         years.insert(0, (year_data, year));
     }
 
     let streak = get_streak(&years, now);
 
-    let last_year_collection = get_calendar(&client, &user, one_year_ago, now).await;
+    let last_year = get_calendar(&client, user, one_year_ago, now).await;
+
+    Ok(UserData {
+        years,
+        last_year,
+        streak,
+        created_at: Utc::now(),
+    })
+}
+
+const ONE_HOUR: i64 = 60 * 60 * 1000;
+
+async fn app_endpoint(
+    State(state): State<ApiState>,
+    Path(user): Path<String>,
+) -> response::Result<Html<String>> {
+    let key = format!("user_{user}");
+    let user_data = state.persist.load::<UserData>(&key);
+    let now = Utc::now();
+
+    let mut new_user_data: Option<UserData> = None;
+
+    if let Ok(user_data) = user_data {
+        if now.timestamp_millis() - user_data.created_at.timestamp_millis() < ONE_HOUR {
+            new_user_data = Some(user_data);
+            info!("Retrieved cached data for user {key}");
+        } else {
+            info!("Cached data for user {key} is too old");
+        }
+    } else {
+        info!("Cached data not found for user {key} is too old");
+    }
+
+    if new_user_data.is_none() {
+        let data = get_user_data(&user, state.token).await?;
+        if let Err(err) = state.persist.save(&key, data.clone()) {
+            info!("Failed caching data for user {key}: {err}");
+        } else {
+            info!("Cached data for user {key}");
+        }
+        new_user_data = Some(data)
+    }
 
     let mut app = VirtualDom::new_with_props(
         app,
         AppProps {
-            collections: years,
-            last_year_collection,
-            streak,
+            user_data: new_user_data.unwrap(),
             user,
         },
     );
