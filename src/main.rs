@@ -53,8 +53,9 @@ fn app(cx: Scope<AppProps>) -> Element {
                         class: "p-2",
                         "Don't forget to star the ",
                         a {
+                            class: "underline",
                             href: "https://github.com/marc2332/ghboard",
-                            "repository ⭐"
+                            "repository ⭐😄"
                         }
                     }
                     h3 {
