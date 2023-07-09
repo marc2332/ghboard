@@ -105,42 +105,58 @@ fn Week(cx: Scope, week: GhWeek) -> Element {
     render!(
         div {
             class: "w-[15px] inline-block",
-            for day in &week.contributionDays {
-                rsx!(
-                    Day {
-                        day: day.clone()
-                    }
-                )
+            for day_n in 0..7 {
+                if let Some(day) = week.contributionDays.iter().find(|day| day.weekday == day_n).cloned() {
+                    rsx!(
+                        Day {
+                            day: day
+                        }
+                    )
+                } else {
+                    rsx!(
+                        Day { }
+                    )
+                }
             }
         }
     )
 }
 
+#[derive(Props, PartialEq)]
+struct DayProps {
+    day: Option<GhDay>,
+}
+
 #[allow(non_snake_case)]
-#[inline_props]
-fn Day(cx: Scope, day: GhDay) -> Element {
-    let color = match day.contributionCount {
-        i if i > 20 => "bg-emerald-300",
-        i if i > 10 => "bg-emerald-400",
-        i if i > 5 => "bg-emerald-600",
-        i if i > 0 => "bg-emerald-800",
-        _ => "bg-zinc-950",
-    };
+fn Day(cx: Scope<DayProps>) -> Element {
+    if let Some(day) = &cx.props.day {
+        let color = match day.contributionCount {
+            i if i > 20 => "bg-emerald-300",
+            i if i > 10 => "bg-emerald-400",
+            i if i > 5 => "bg-emerald-600",
+            i if i > 0 => "bg-emerald-800",
+            _ => "bg-zinc-950",
+        };
 
-    let day_name = match day.weekday {
-        0 => "Monday",
-        1 => "Tuesday",
-        2 => "Wednesday",
-        3 => "Thursday",
-        4 => "Friday",
-        5 => "Saturday",
-        _ => "Sunday"
-    };
+        let day_name = match day.weekday {
+            0 => "Monday",
+            1 => "Tuesday",
+            2 => "Wednesday",
+            3 => "Thursday",
+            4 => "Friday",
+            5 => "Saturday",
+            _ => "Sunday",
+        };
 
-    render!(div {
-        class: "{color} w-[10px] h-[10px] m-2 rounded-sm",
-        title: "{day.contributionCount} contributions on {day_name}, {day.date}"
-    })
+        render!(div {
+            class: "{color} w-[10px] h-[10px] m-2 rounded-sm",
+            title: "{day.contributionCount} contributions on {day_name}, {day.date}"
+        })
+    } else {
+        render!(div {
+            class: "w-[10px] h-[10px] m-2",
+        })
+    }
 }
 
 #[derive(Clone)]
