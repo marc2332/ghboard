@@ -7,11 +7,11 @@ pub struct HomeRouteProps {}
 pub fn home_route(cx: Scope<HomeRouteProps>) -> Element {
     render!(
         Page {
-            title: "gboard",
+            title: "ghboard",
             div {
                 h1 {
                     class: "text-2xl my-8",
-                    "🦑 gboard"
+                    "🦑 ghboard"
                 }
                 h3 {
                     class: "text-2x",
