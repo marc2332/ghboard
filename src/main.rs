@@ -1,163 +1,26 @@
-mod dashboard;
+mod cache;
+mod client;
+mod components;
+mod routes;
 
-use chrono::{DateTime, Datelike, Utc};
-use dashboard::*;
-use serde::{Deserialize, Serialize};
+use cache::{get_user_data, UserData};
+use chrono::Utc;
+use routes::{
+    home::{home_route, HomeRouteProps},
+    users::{user_route, UserRouteProps},
+};
 use shuttle_persist::PersistInstance;
 use shuttle_secrets::SecretStore;
 use tracing::info;
 
 use axum::{
     extract::{Path, State},
-    response::{self, ErrorResponse, Html},
+    response::{self, Html},
     routing::get,
     Router,
 };
 use dioxus::prelude::*;
 use dotenv::dotenv;
-use octocrab::Octocrab;
-
-struct AppProps {
-    user_data: UserData,
-    user: String,
-}
-
-fn app(cx: Scope<AppProps>) -> Element {
-    render!(
-        head {
-            title {
-                "{cx.props.user} | ghboard"
-            }
-            link {
-                rel: "icon",
-                href: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦑</text></svg>"
-            }
-        }
-        script {
-            src: "https://cdn.tailwindcss.com"
-        }
-        div {
-            class: "h-full bg-zinc-900 overflow-auto text-white",
-            div {
-                class: "h-full flex justify-center mx-auto",
-                div {
-                    h1 {
-                        class: "p-2 text-2xl",
-                        "{cx.props.user}"
-                    }
-                    h2 {
-                        class: "p-2",
-                        "Current streak: {cx.props.user_data.streak}"
-                    }
-                    b {
-                        class: "p-2",
-                        "Don't forget to star the ",
-                        a {
-                            class: "underline",
-                            href: "https://github.com/marc2332/ghboard",
-                            "repository ⭐😄"
-                        }
-                    }
-                    h3 {
-                        class: "p-2",
-                        "{cx.props.user_data.last_year.totalContributions} contributions in the last year"
-                    }
-                    Calendar {
-                        collection: cx.props.user_data.last_year.clone(),
-                    },
-                    for (collection, year) in &cx.props.user_data.years {
-                        rsx!(
-                            h3 {
-                                class: "p-2",
-                                "{collection.totalContributions} contributions in {year}"
-                            }
-                            Calendar {
-                                collection: collection.clone(),
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-#[allow(non_snake_case)]
-#[inline_props]
-fn Calendar(cx: Scope, collection: ContributionCalendar) -> Element {
-    render!(
-        div {
-            class: "bg-zinc-900",
-            for week in &collection.weeks {
-                rsx!(
-                    Week {
-                        week: week.clone()
-                    }
-                )
-            }
-        }
-    )
-}
-
-#[allow(non_snake_case)]
-#[inline_props]
-fn Week(cx: Scope, week: GhWeek) -> Element {
-    render!(
-        div {
-            class: "w-[15px] inline-block",
-            for day_n in 0..7 {
-                if let Some(day) = week.contributionDays.iter().find(|day| day.weekday == day_n).cloned() {
-                    rsx!(
-                        Day {
-                            day: day
-                        }
-                    )
-                } else {
-                    rsx!(
-                        Day { }
-                    )
-                }
-            }
-        }
-    )
-}
-
-#[derive(Props, PartialEq)]
-struct DayProps {
-    day: Option<GhDay>,
-}
-
-#[allow(non_snake_case)]
-fn Day(cx: Scope<DayProps>) -> Element {
-    if let Some(day) = &cx.props.day {
-        let color = match day.contributionCount {
-            i if i > 20 => "bg-emerald-300",
-            i if i > 10 => "bg-emerald-400",
-            i if i > 5 => "bg-emerald-600",
-            i if i > 0 => "bg-emerald-800",
-            _ => "bg-zinc-950",
-        };
-
-        let day_name = match day.weekday {
-            0 => "Monday",
-            1 => "Tuesday",
-            2 => "Wednesday",
-            3 => "Thursday",
-            4 => "Friday",
-            5 => "Saturday",
-            _ => "Sunday",
-        };
-
-        render!(div {
-            class: "{color} w-[10px] h-[10px] m-2 rounded-sm",
-            title: "{day.contributionCount} contributions on {day_name}, {day.date}"
-        })
-    } else {
-        render!(div {
-            class: "w-[10px] h-[10px] m-2",
-        })
-    }
-}
 
 #[derive(Clone)]
 struct ApiState {
@@ -178,62 +41,23 @@ async fn axum(
     let state = ApiState { token, persist };
 
     let router = Router::new()
-        .route("/user/:user", get(app_endpoint))
+        .route("/", get(home_endpoint))
+        .route("/user/:user", get(user_endpoint))
         .with_state(state);
 
     Ok(router.into())
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-struct UserData {
-    created_at: DateTime<Utc>,
-    years: Vec<(ContributionCalendar, i32)>,
-    last_year: ContributionCalendar,
-    streak: i32,
-}
+async fn home_endpoint() -> response::Result<Html<String>> {
+    let mut app = VirtualDom::new_with_props(home_route, HomeRouteProps {});
+    let _ = app.rebuild();
 
-async fn get_user_data(user: &str, token: String) -> Result<UserData, ErrorResponse> {
-    let client = Octocrab::builder().personal_token(token).build().unwrap();
-
-    let now = Utc::now();
-    let joined = get_join_date(&client, user)
-        .await
-        .map_err(|_| ErrorResponse::from("Something went wrong, try again."))?
-        .with_month0(0)
-        .unwrap()
-        .with_day0(0)
-        .unwrap();
-    let years_since_joined = now.years_since(joined).unwrap() as i32;
-    let one_year_ago = now.with_year(now.year() - 1).unwrap();
-
-    let mut years = Vec::new();
-
-    for year_num in 0..years_since_joined + 1 {
-        let year = joined.year() + year_num;
-
-        let from = new_date_year(year);
-        let to = from.with_month(12).unwrap().with_day(31).unwrap();
-
-        let year_data = get_calendar(&client, user, from, to).await;
-
-        years.insert(0, (year_data, year));
-    }
-
-    let streak = get_streak(&years, now);
-
-    let last_year = get_calendar(&client, user, one_year_ago, now).await;
-
-    Ok(UserData {
-        years,
-        last_year,
-        streak,
-        created_at: Utc::now(),
-    })
+    Ok(Html(dioxus_ssr::render(&app)))
 }
 
 const ONE_HOUR: i64 = 60 * 60 * 1000;
 
-async fn app_endpoint(
+async fn user_endpoint(
     State(state): State<ApiState>,
     Path(user): Path<String>,
 ) -> response::Result<Html<String>> {
@@ -265,8 +89,8 @@ async fn app_endpoint(
     }
 
     let mut app = VirtualDom::new_with_props(
-        app,
-        AppProps {
+        user_route,
+        UserRouteProps {
             user_data: new_user_data.unwrap(),
             user,
         },
