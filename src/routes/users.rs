@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 use crate::{
     cache::UserData,
-    client::{ContributionCalendar, GhDay, GhWeek},
+    client::{ContributionsCollection, GhDay, GhWeek},
     components::page::Page,
 };
 
@@ -22,7 +22,11 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                 }
                 h2 {
                     class: "p-2",
-                    "Current streak: {cx.props.user_data.streak}"
+                    "Current streak: {cx.props.user_data.current_streak}"
+                }
+                h2 {
+                    class: "p-2",
+                    "Longest streak: {cx.props.user_data.longest_streak}"
                 }
                 b {
                     class: "p-2",
@@ -35,7 +39,7 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                 }
                 h3 {
                     class: "p-2",
-                    "{cx.props.user_data.last_year.totalContributions} contributions in the last year"
+                    "{cx.props.user_data.last_year.contributionCalendar.totalContributions} contributions in the last year"
                 }
                 Calendar {
                     collection: cx.props.user_data.last_year.clone(),
@@ -44,7 +48,7 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                     rsx!(
                         h3 {
                             class: "p-2",
-                            "{collection.totalContributions} contributions in {year}"
+                            "{collection.contributionCalendar.totalContributions} contributions in {year}"
                         }
                         Calendar {
                             collection: collection.clone(),
@@ -58,11 +62,11 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
 
 #[allow(non_snake_case)]
 #[inline_props]
-pub fn Calendar(cx: Scope, collection: ContributionCalendar) -> Element {
+pub fn Calendar(cx: Scope, collection: ContributionsCollection) -> Element {
     render!(
         div {
             class: "bg-zinc-900",
-            for week in &collection.weeks {
+            for week in &collection.contributionCalendar.weeks {
                 rsx!(
                     Week {
                         week: week.clone()

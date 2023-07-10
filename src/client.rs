@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Datelike, SecondsFormat, Timelike, Utc};
 use octocrab::{Error, Octocrab};
 use serde::{Deserialize, Serialize};
@@ -46,6 +48,10 @@ pub fn new_date_year(year: i32) -> DateTime<Utc> {
         .unwrap()
 }
 
+pub fn date_with_just_year(date: DateTime<Utc>) -> Option<DateTime<Utc>> {
+    date.with_month0(0)?.with_day0(0)
+}
+
 pub async fn get_join_date(client: &Octocrab, user: &str) -> Result<DateTime<Utc>, Error> {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Response {
@@ -81,12 +87,11 @@ pub async fn get_join_date(client: &Octocrab, user: &str) -> Result<DateTime<Utc
     Ok(response.data.user.createdAt)
 }
 
-pub async fn get_calendar(
+pub async fn get_calendars(
     client: &Octocrab,
     user: &str,
-    from: DateTime<Utc>,
-    to: DateTime<Utc>,
-) -> ContributionCalendar {
+    calendars: &[(String, DateTime<Utc>, DateTime<Utc>)],
+) -> HashMap<String, ContributionsCollection> {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Response {
         data: Data,
@@ -94,26 +99,17 @@ pub async fn get_calendar(
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Data {
-        user: User,
+        user: HashMap<String, ContributionsCollection>,
     }
 
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[allow(non_snake_case)]
-    struct User {
-        contributionsCollection: ContributionsCollection,
-    }
+    let mut queries = String::new();
 
-    let from = from.to_rfc3339_opts(SecondsFormat::Secs, true);
-    let to = to.to_rfc3339_opts(SecondsFormat::Secs, true);
-
-    let response = client
-        .graphql::<Response>(&json!({
-            "query":
-                format!(
-                    "
-    {{
-        user(login: \"{user}\") {{
-          contributionsCollection(from: \"{from}\", to: \"{to}\") {{
+    for (key, from, to) in calendars {
+        let from = from.to_rfc3339_opts(SecondsFormat::Secs, true);
+        let to = to.to_rfc3339_opts(SecondsFormat::Secs, true);
+        queries.push_str(&format!(
+            "
+        {key}: contributionsCollection(from: \"{from}\", to: \"{to}\") {{
             contributionCalendar {{
               totalContributions
               weeks {{
@@ -125,35 +121,49 @@ pub async fn get_calendar(
               }}
             }}
           }}
+          \n
+        "
+        ))
+    }
+
+    let req = format!(
+        "
+        {{
+            user(login: \"{user}\") {{
+                {queries}
+            }}
         }}
-      }}
-    "
-                )
-        }))
+"
+    );
+
+    let response = client
+        .graphql::<Response>(&json!({ "query": req }))
         .await
         .unwrap();
 
-    response
-        .data
-        .user
-        .contributionsCollection
-        .contributionCalendar
+    response.data.user
 }
 
-pub fn get_streak(years: &[(ContributionCalendar, i32)], now: DateTime<Utc>) -> i32 {
-    let mut streak = 0;
+pub fn get_streaks(years: &[(ContributionsCollection, i32)], now: DateTime<Utc>) -> (i32, i32) {
+    let mut current_streak = 0;
+    let mut longest_streak = 0;
 
     for (year, year_num) in years.iter().rev() {
         let mut day_c = 0;
-        for week in &year.weeks {
+        for week in &year.contributionCalendar.weeks {
             for day in &week.contributionDays {
                 if day_c as u32 > now.ordinal0() && *year_num == now.year() {
                     break;
                 }
 
-                streak += 1;
-                if day.contributionCount == 0 && streak < 500 {
-                    streak = 0;
+                current_streak += 1;
+
+                if current_streak > longest_streak {
+                    longest_streak = current_streak;
+                }
+
+                if day.contributionCount == 0 {
+                    current_streak = 0;
                 }
 
                 day_c += 1;
@@ -161,5 +171,5 @@ pub fn get_streak(years: &[(ContributionCalendar, i32)], now: DateTime<Utc>) -> 
         }
     }
 
-    streak
+    (current_streak, longest_streak)
 }

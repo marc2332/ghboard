@@ -75,7 +75,7 @@ async fn user_endpoint(
             info!("Cached data for user {key} is too old");
         }
     } else {
-        info!("Cached data not found for user {key} is too old");
+        info!("Cached data of user {key} is invalid");
     }
 
     if new_user_data.is_none() {
