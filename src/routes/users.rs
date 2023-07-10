@@ -65,7 +65,7 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
 pub fn Calendar(cx: Scope, collection: ContributionsCollection) -> Element {
     render!(
         div {
-            class: "bg-zinc-900",
+            class: "bg-zinc-900 whitespace-nowrap overflow-auto md:overflow-visible",
             for week in &collection.contributionCalendar.weeks {
                 rsx!(
                     Week {
