@@ -148,12 +148,16 @@ pub fn get_streaks(years: &[(ContributionsCollection, i32)], now: DateTime<Utc>)
     let mut current_streak = 0;
     let mut longest_streak = 0;
 
-    for (year, year_num) in years.iter().rev() {
+    'counter: for (year_i, (year, _)) in years.iter().rev().enumerate() {
+        let is_last_year = year_i == years.len() - 1;
         let mut day_c = 0;
         for week in &year.contributionCalendar.weeks {
             for day in &week.contributionDays {
-                if day_c as u32 > now.ordinal0() && *year_num == now.year() {
-                    break;
+                let is_last_day = day_c == now.ordinal0() && is_last_year;
+                let is_future = day_c > now.ordinal0() && is_last_year;
+
+                if is_future {
+                    break 'counter;
                 }
 
                 current_streak += 1;
@@ -162,7 +166,7 @@ pub fn get_streaks(years: &[(ContributionsCollection, i32)], now: DateTime<Utc>)
                     longest_streak = current_streak;
                 }
 
-                if day.contributionCount == 0 {
+                if day.contributionCount == 0 && !is_last_day {
                     current_streak = 0;
                 }
 
