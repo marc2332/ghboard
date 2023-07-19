@@ -161,13 +161,13 @@ pub fn get_streaks(years: &[(ContributionsCollection, i32)], now: DateTime<Utc>)
                     current_streak += 1;
                 }
 
-                if is_future {
-                    break 'counter;
-                }
-
                 // keep longest streak
                 if current_streak > longest_streak {
                     longest_streak = current_streak;
+                }
+
+                if is_future {
+                    break 'counter;
                 }
 
                 // Reset contributions
