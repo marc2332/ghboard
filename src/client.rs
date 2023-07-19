@@ -154,18 +154,23 @@ pub fn get_streaks(years: &[(ContributionsCollection, i32)], now: DateTime<Utc>)
         for week in &year.contributionCalendar.weeks {
             for day in &week.contributionDays {
                 let is_last_day = day_c == now.ordinal0() && is_last_year;
-                let is_future = day_c > now.ordinal0() && is_last_year;
+                let is_future = day_c >= now.ordinal0() && is_last_year;
+
+                // Count contributions
+                if day.contributionCount > 0 {
+                    current_streak += 1;
+                }
 
                 if is_future {
                     break 'counter;
                 }
 
-                current_streak += 1;
-
+                // keep longest streak
                 if current_streak > longest_streak {
                     longest_streak = current_streak;
                 }
 
+                // Reset contributions
                 if day.contributionCount == 0 && !is_last_day {
                     current_streak = 0;
                 }
