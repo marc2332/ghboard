@@ -28,7 +28,7 @@ pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
             }
             link {
                 rel: "stylesheet",
-                href: "/assets/style.css"
+                href: "/public/style.css"
             }
         }
         div {
