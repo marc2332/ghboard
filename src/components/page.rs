@@ -22,16 +22,18 @@ pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
                 name: "viewport",
                 content: "width=device-width, initial-scale=1.0"
             }
-        }
-        script {
-            src: "https://cdn.tailwindcss.com"
+            meta {
+                name: "description",
+                content: "GitHub Dashbard to track contributions."
+            }
+            link {
+                rel: "stylesheet",
+                href: "/assets/style.css"
+            }
         }
         div {
-            class: "h-full bg-zinc-900 overflow-auto text-white px-4",
-            div {
-                class: "h-full md:flex md:justify-center mx-auto",
-                &cx.props.children
-            }
+            class: "body-content",
+            &cx.props.children
         }
     )
 }

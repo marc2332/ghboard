@@ -10,30 +10,27 @@ pub fn home_route(cx: Scope<HomeRouteProps>) -> Element {
             title: "ghboard",
             div {
                 h1 {
-                    class: "text-2xl my-8",
+                    class: "title",
                     "🦑 ghboard"
                 }
-                h3 {
-                    class: "text-2x",
+                p {
+                    class: "subtitle",
                     "GitHub dashboard written in Rust🦀, made using Dioxus SSR 🧬, hosted in Shuttle 🚀 and powered by the GitHub GraphQL API 🦑."
                 }
                 b {
                     "Don't forget to star the ",
                     a {
-                        class: "underline",
                         href: "https://github.com/marc2332/ghboard",
                         "repository ⭐😄"
                     }
                 }
                 div {
-                    class: "flex justify-center p-10",
+                    class: "centered-box",
                     input {
-                        class: "text-black p-2 rounded-md mx-2",
                         id: "username",
                         placeholder: "Your GitHub username"
                     }
                     button {
-                        class: "text-black px-4 py-1 rounded-md bg-green-600 text-white",
                         id: "continue",
                         "Continue"
                     }

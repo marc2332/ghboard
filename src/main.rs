@@ -23,6 +23,7 @@ use axum::{
 };
 use dioxus::prelude::*;
 use dotenv::dotenv;
+use tower_http::services::ServeDir;
 
 #[derive(Clone)]
 struct ApiState {
@@ -44,6 +45,7 @@ async fn axum(
 
     let router = Router::new()
         .route("/", get(home_endpoint))
+        .nest_service("/assets", ServeDir::new("assets"))
         .route("/user/:user", get(user_endpoint))
         .with_state(state);
 
