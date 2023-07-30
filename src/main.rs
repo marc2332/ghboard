@@ -3,18 +3,20 @@ mod client;
 mod components;
 mod routes;
 
+use std::collections::HashMap;
+
 use cache::{get_user_data, UserData};
 use chrono::Utc;
 use routes::{
     home::{home_route, HomeRouteProps},
-    users::{user_route, UserRouteProps},
+    users::{user_route, Theme, UserRouteProps},
 };
 use shuttle_persist::PersistInstance;
 use shuttle_secrets::SecretStore;
 use tracing::info;
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     response::{self, Html},
     routing::get,
     Router,
@@ -60,7 +62,9 @@ const ONE_HOUR: i64 = 60 * 60 * 1000;
 async fn user_endpoint(
     State(state): State<ApiState>,
     Path(user): Path<String>,
+    Query(mut params): Query<HashMap<String, String>>,
 ) -> response::Result<Html<String>> {
+    let theme = Theme::from_name(&params.remove("theme").unwrap_or_default());
     let key = format!("user_{user}");
     let user_data = state.persist.load::<UserData>(&key);
     let now = Utc::now();
@@ -88,13 +92,14 @@ async fn user_endpoint(
         new_user_data = Some(data)
     }
 
-    let mut app = VirtualDom::new_with_props(
+    let app = VirtualDom::new_with_props(
         user_route,
         UserRouteProps {
             user_data: new_user_data.unwrap(),
             user,
         },
     );
+    let mut app = app.with_root_context(theme);
     let _ = app.rebuild();
 
     Ok(Html(dioxus_ssr::render(&app)))

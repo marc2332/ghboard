@@ -16,9 +16,19 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
         Page {
             title: "{cx.props.user} | ghboard",
             div {
+                class: "pt-4",
                 h1 {
                     class: "p-2 text-2xl",
-                    "{cx.props.user}"
+                    "{cx.props.user}",
+                    b {
+                        class: "p-2 text-base",
+                        "Don't forget to star the ",
+                        a {
+                            class: "underline",
+                            href: "https://github.com/marc2332/ghboard",
+                            "repository ⭐😄"
+                        }
+                    }
                 }
                 h2 {
                     class: "p-2",
@@ -28,14 +38,16 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                     class: "p-2",
                     "Longest streak: {cx.props.user_data.longest_streak}"
                 }
-                b {
+                div {
                     class: "p-2",
-                    "Don't forget to star the ",
-                    a {
-                        class: "underline",
-                        href: "https://github.com/marc2332/ghboard",
-                        "repository ⭐😄"
+                    span {
+                        "Themes: "
                     }
+                    ThemeLink { code: "github", name: "🐙 GitHub" },
+                    ThemeLink { code: "winter", name: "🥶 Winter" },
+                    ThemeLink { code: "halloween", name: "🎃 Halloween" },
+                    ThemeLink { code: "barbie", name: "👸 Barbie" },
+                    ThemeLink { code: "oppenheimer", name: "💣 Oppenheimer" },
                 }
                 h3 {
                     class: "p-2",
@@ -107,13 +119,14 @@ pub struct DayProps {
 
 #[allow(non_snake_case)]
 pub fn Day(cx: Scope<DayProps>) -> Element {
+    let theme = use_context::<Theme>(cx).unwrap();
     if let Some(day) = &cx.props.day {
         let color = match day.contributionCount {
-            i if i > 20 => "bg-emerald-300",
-            i if i > 10 => "bg-emerald-400",
-            i if i > 5 => "bg-emerald-600",
-            i if i > 0 => "bg-emerald-800",
-            _ => "bg-zinc-950",
+            i if i > 20 => &theme.quite_a_lot,
+            i if i > 10 => &theme.a_lot,
+            i if i > 5 => &theme.okay,
+            i if i > 0 => &theme.meh,
+            _ => &theme.nothing,
         };
 
         let day_name = match day.weekday {
@@ -135,4 +148,67 @@ pub fn Day(cx: Scope<DayProps>) -> Element {
             class: "w-[10px] h-[10px] m-2",
         })
     }
+}
+
+#[derive(Clone)]
+pub struct Theme {
+    quite_a_lot: String,
+    a_lot: String,
+    okay: String,
+    meh: String,
+    nothing: String,
+}
+
+impl Theme {
+    pub fn from_name(name: &str) -> Theme {
+        match name {
+            "halloween" => Theme {
+                quite_a_lot: "bg-yellow-300".to_string(),
+                a_lot: "bg-yellow-400".to_string(),
+                okay: "bg-yellow-600".to_string(),
+                meh: "bg-yellow-800".to_string(),
+                nothing: "bg-zinc-950".to_string(),
+            },
+            "winter" => Theme {
+                quite_a_lot: "bg-blue-200".to_string(),
+                a_lot: "bg-blue-400".to_string(),
+                okay: "bg-blue-700".to_string(),
+                meh: "bg-blue-900".to_string(),
+                nothing: "bg-zinc-950".to_string(),
+            },
+            "barbie" => Theme {
+                quite_a_lot: "bg-pink-200".to_string(),
+                a_lot: "bg-pink-400".to_string(),
+                okay: "bg-pink-700".to_string(),
+                meh: "bg-pink-900".to_string(),
+                nothing: "bg-zinc-950".to_string(),
+            },
+            "oppenheimer" => Theme {
+                quite_a_lot: "bg-yellow-100".to_string(),
+                a_lot: "bg-amber-400".to_string(),
+                okay: "bg-orange-700".to_string(),
+                meh: "bg-amber-900".to_string(),
+                nothing: "bg-zinc-950".to_string(),
+            },
+            _ => Theme {
+                quite_a_lot: "bg-emerald-300".to_string(),
+                a_lot: "bg-emerald-400".to_string(),
+                okay: "bg-emerald-600".to_string(),
+                meh: "bg-emerald-800".to_string(),
+                nothing: "bg-zinc-950".to_string(),
+            },
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+#[inline_props]
+fn ThemeLink<'a>(cx: Scope, code: &'a str, name: &'a str) -> Element {
+    render!(
+        a {
+            class: "underline mr-2",
+            href: "?theme={code}",
+            "{name}"
+        }
+    )
 }
