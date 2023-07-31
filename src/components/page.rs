@@ -5,10 +5,13 @@ pub struct PageProps<'a> {
     #[props(into)]
     title: String,
     children: Element<'a>,
+    #[props(optional)]
+    theme: Option<&'a str>,
 }
 
 #[allow(non_snake_case)]
 pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
+    let theme = cx.props.theme.unwrap_or_default();
     render!(
         head {
             title {
@@ -31,9 +34,12 @@ pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
                 href: "/assets/style.css"
             }
         }
-        div {
-            class: "body-content",
-            &cx.props.children
+        body {
+            class: "{theme}-theme",
+            div {
+                class: "body-content",
+                &cx.props.children
+            }
         }
     )
 }

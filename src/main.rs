@@ -9,7 +9,7 @@ use cache::{get_user_data, UserData};
 use chrono::Utc;
 use routes::{
     home::{home_route, HomeRouteProps},
-    users::{user_route, Theme, UserRouteProps},
+    users::{user_route, UserRouteProps},
 };
 use shuttle_persist::PersistInstance;
 use shuttle_secrets::SecretStore;
@@ -66,7 +66,7 @@ async fn user_endpoint(
     Path(user): Path<String>,
     Query(mut params): Query<HashMap<String, String>>,
 ) -> response::Result<Html<String>> {
-    let theme = Theme::from_name(&params.remove("theme").unwrap_or_default());
+    let theme = params.remove("theme").unwrap_or("github".to_string());
     let key = format!("user_{user}");
     let user_data = state.persist.load::<UserData>(&key);
     let now = Utc::now();
@@ -94,14 +94,14 @@ async fn user_endpoint(
         new_user_data = Some(data)
     }
 
-    let app = VirtualDom::new_with_props(
+    let mut app = VirtualDom::new_with_props(
         user_route,
         UserRouteProps {
             user_data: new_user_data.unwrap(),
             user,
+            theme,
         },
     );
-    let mut app = app.with_root_context(theme);
     let _ = app.rebuild();
 
     Ok(Html(dioxus_ssr::render(&app)))

@@ -11,6 +11,43 @@ body {
     color: white;
 }
 
+body.halloween-theme {
+  --quiteALot: rgb(248 232 152);
+  --aLot: rgb(250 204 21);
+  --okay: rgb(202 138 4);
+  --meh: rgb(133 77 14);
+}
+
+body.winter-theme {
+  --quiteALot: rgb(191 219 254);
+  --aLot: rgb(96 165 250);
+  --okay: rgb(29 78 216);
+  --meh: rgb(30 58 138);
+}
+
+body.barbie-theme {
+  --quiteALot: rgb(251 207 232);
+  --aLot: rgb(244 114 182);
+  --okay: rgb(190 24 93);
+  --meh: rgb(131 24 67);
+}
+
+
+body.oppenheimer-theme {
+  --quiteALot: rgb(254 249 195);
+  --aLot: rgb(251 191 36);
+  --okay: rgb(194 65 12);
+  --meh: rgb(120 53 15);
+}
+
+body.github-theme {
+  --quiteALot: rgb(151 238 203);
+  --aLot: rgb(77 219 167);
+  --okay: rgb(5 150 105);
+  --meh: rgb(6 95 70);
+}
+
+
 a {
   color: white;
 }
@@ -67,6 +104,26 @@ a {
     height: 10px;
     margin: 8px;
     border-radius: 2px;
+}
+
+.calendar-day.quiteALot {
+  background-color: var(--quiteALot);
+}
+
+.calendar-day.aLot {
+  background-color: var(--aLot);
+}
+
+.calendar-day.okay {
+  background-color: var(--okay);
+}
+
+.calendar-day.meh {
+  background-color: var(--meh);
+}
+
+.calendar-day.nothing {
+  background-color: rgb(9 9 11);
 }
 
 .theme-link {
