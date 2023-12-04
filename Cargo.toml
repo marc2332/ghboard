@@ -23,5 +23,4 @@ shuttle-runtime = "0.34"
 shuttle-secrets = "0.34"
 shuttle-persist = "0.34"
 tracing = "0.1.37"
-shuttle-static-folder ="0.28"
 tower-http = { version = "0.4.3", features = ["fs"] }

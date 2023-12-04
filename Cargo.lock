@@ -982,7 +982,6 @@ dependencies = [
  "shuttle-persist",
  "shuttle-runtime",
  "shuttle-secrets",
- "shuttle-static-folder",
  "tokio",
  "tower-http",
  "tracing",
@@ -2390,27 +2389,6 @@ dependencies = [
 
 [[package]]
 name = "shuttle-common"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e47b17dc8e970053a38dbc24a2c507682a6cd1a6ec04d80799ceaf49ffd95b46"
-dependencies = [
- "anyhow",
- "chrono",
- "comfy-table",
- "crossterm 0.27.0",
- "once_cell",
- "rustrict",
- "semver",
- "serde",
- "serde_json",
- "strum 0.24.1",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "shuttle-common"
 version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0406c689a1edb0d12bd813d2b245619752ce0ad6122dad35c3f08ffccd2a40c"
@@ -2460,7 +2438,7 @@ dependencies = [
  "async-trait",
  "bincode",
  "serde",
- "shuttle-service 0.34.1",
+ "shuttle-service",
  "thiserror",
 ]
 
@@ -2473,7 +2451,7 @@ dependencies = [
  "futures-core",
  "prost 0.12.3",
  "prost-types",
- "shuttle-common 0.34.1",
+ "shuttle-common",
  "tonic 0.10.2",
 ]
 
@@ -2491,9 +2469,9 @@ dependencies = [
  "serde",
  "serde_json",
  "shuttle-codegen",
- "shuttle-common 0.34.1",
+ "shuttle-common",
  "shuttle-proto",
- "shuttle-service 0.34.1",
+ "shuttle-service",
  "strfmt",
  "thiserror",
  "tokio",
@@ -2512,21 +2490,7 @@ dependencies = [
  "async-trait",
  "secrecy",
  "serde",
- "shuttle-service 0.34.1",
-]
-
-[[package]]
-name = "shuttle-service"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63f9f1fe4eae29feefce7c3775a10e0a7d0f62dc799741cc667b8e19306aedb5"
-dependencies = [
- "anyhow",
- "async-trait",
- "serde",
- "shuttle-common 0.30.1",
- "strfmt",
- "thiserror",
+ "shuttle-service",
 ]
 
 [[package]]
@@ -2538,20 +2502,9 @@ dependencies = [
  "anyhow",
  "async-trait",
  "serde",
- "shuttle-common 0.34.1",
+ "shuttle-common",
  "strfmt",
  "thiserror",
-]
-
-[[package]]
-name = "shuttle-static-folder"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95ba22fa20c08afb3f98de4711c58cc0ef7e86afdfede8d75209fb1825115864"
-dependencies = [
- "async-trait",
- "serde",
- "shuttle-service 0.30.1",
 ]
 
 [[package]]
@@ -2698,9 +2651,6 @@ name = "strum"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
-dependencies = [
- "strum_macros 0.24.3",
-]
 
 [[package]]
 name = "strum"

@@ -34,7 +34,6 @@ struct ApiState {
 
 #[shuttle_runtime::main]
 async fn axum(
-    #[shuttle_static_folder::StaticFolder(folder = "public")] public_folder: PathBuf,
     #[shuttle_secrets::Secrets] secret_store: SecretStore,
     #[shuttle_persist::Persist] persist: PersistInstance,
 ) -> shuttle_axum::ShuttleAxum {
@@ -47,7 +46,7 @@ async fn axum(
 
     let router = Router::new()
         .route("/", get(home_endpoint))
-        .nest_service("/public", ServeDir::new(public_folder))
+        .nest_service("/public", ServeDir::new(PathBuf::from("public")))
         .route("/user/:user", get(user_endpoint))
         .with_state(state);
 
