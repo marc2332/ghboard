@@ -1,4 +1,4 @@
 /target
 .env
 Secrets.toml
-shuttle_persist
+.shuttle-storage
