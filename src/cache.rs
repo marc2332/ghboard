@@ -27,7 +27,10 @@ pub async fn get_user_data(user: &str, token: String) -> Result<UserData, ErrorR
             .map_err(|_| ErrorResponse::from("Something went wrong, try again."))?,
     )
     .unwrap();
-    let years_since_joined = now.years_since(joined).unwrap() as i32;
+    let years_since_joined = date_with_just_year(now)
+        .unwrap()
+        .years_since(joined)
+        .unwrap() as i32;
     let one_year_ago = now.with_year(now.year() - 1).unwrap();
     let years_range = 0..years_since_joined + 1;
 

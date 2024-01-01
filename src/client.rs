@@ -46,10 +46,20 @@ pub fn new_date_year(year: i32) -> DateTime<Utc> {
         .unwrap()
         .with_year(year)
         .unwrap()
+        .with_hour(0)
+        .unwrap()
+        .with_minute(0)
+        .unwrap()
+        .with_second(0)
+        .unwrap()
 }
 
 pub fn date_with_just_year(date: DateTime<Utc>) -> Option<DateTime<Utc>> {
-    date.with_month0(0)?.with_day0(0)
+    date.with_month0(0)?
+        .with_day0(0)?
+        .with_hour(0)?
+        .with_minute(0)?
+        .with_second(0)
 }
 
 pub async fn get_join_date(client: &Octocrab, user: &str) -> Result<DateTime<Utc>, Error> {
