@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.6.18"
+axum = "0.7"
 chrono = { version = "0.4.26", features = ["serde"] }
 dioxus = "0.3.2"
 dioxus-hot-reload = "0.1.1"
@@ -18,9 +18,9 @@ secrecy = "0.8.0"
 serde = "1.0.166"
 serde_json = "1.0.100"
 tokio = { version = "1.29.1", features = ["full"] }
-shuttle-axum = "0.35"
-shuttle-runtime = "0.35"
-shuttle-secrets = "0.35"
-shuttle-persist = "0.35"
+shuttle-axum = "0.37"
+shuttle-runtime = "0.37"
+shuttle-secrets = "0.37"
+shuttle-persist = "0.37"
 tracing = "0.1.37"
-tower-http = { version = "0.4.3", features = ["fs"] }
+tower-http = { version = "0.5", features = ["fs"] }
