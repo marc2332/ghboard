@@ -18,9 +18,9 @@ secrecy = "0.8.0"
 serde = "1.0.166"
 serde_json = "1.0.100"
 tokio = { version = "1.29.1", features = ["full"] }
-shuttle-axum = "0.37"
-shuttle-runtime = "0.37"
-shuttle-secrets = "0.37"
-shuttle-persist = "0.37"
+shuttle-axum = "0.41"
+shuttle-runtime = "0.41"
+shuttle-secrets = "0.41"
+shuttle-persist = "0.41"
 tracing = "0.1.37"
 tower-http = { version = "0.5", features = ["fs"] }
