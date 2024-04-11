@@ -10,6 +10,7 @@ pub struct UserRouteProps {
     pub user_data: UserData,
     pub user: String,
     pub theme: String,
+    pub size: String,
 }
 
 pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
@@ -17,6 +18,7 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
         Page {
             title: "{cx.props.user} | ghboard",
             theme: &cx.props.theme,
+            size: &cx.props.size,
             div {
                 h1 {
                     class: "title",
@@ -43,11 +45,20 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                     span {
                         "Themes: "
                     }
-                    ThemeLink { code: "github", name: "🐙 GitHub" },
-                    ThemeLink { code: "winter", name: "🥶 Winter" },
-                    ThemeLink { code: "halloween", name: "🎃 Halloween" },
-                    ThemeLink { code: "barbie", name: "👸 Barbie" },
-                    ThemeLink { code: "oppenheimer", name: "💣 Oppenheimer" },
+                    CustomizationLink { theme: "github", size: &cx.props.size, text: "🐙 GitHub" },
+                    CustomizationLink { theme: "winter", size: &cx.props.size, text: "🥶 Winter" },
+                    CustomizationLink { theme: "halloween", size: &cx.props.size, text: "🎃 Halloween" },
+                    CustomizationLink { theme: "barbie", size: &cx.props.size, text: "👸 Barbie" },
+                    CustomizationLink { theme: "oppenheimer", size: &cx.props.size, text: "💣 Oppenheimer" },
+                }
+                div {
+                    class: "data-title",
+                    span {
+                        "Sizes: "
+                    }
+                    CustomizationLink { size: "fully-compact", theme: &cx.props.theme, text: "🤏 Fully Compact" },
+                    CustomizationLink { size: "compact", theme: &cx.props.theme, text: "📦 Compact" },
+                    CustomizationLink { size: "normal", theme: &cx.props.theme, text: "👍 Normal" },
                 }
                 h4 {
                     class: "data-title",
@@ -151,12 +162,12 @@ pub fn Day(cx: Scope<DayProps>) -> Element {
 
 #[allow(non_snake_case)]
 #[inline_props]
-fn ThemeLink<'a>(cx: Scope, code: &'a str, name: &'a str) -> Element {
+fn CustomizationLink<'a>(cx: Scope, theme: &'a str, size: &'a str, text: &'a str) -> Element {
     render!(
         a {
             class: "theme-link",
-            href: "?theme={code}",
-            "{name}"
+            href: "?theme={theme}&size={size}",
+            "{text}"
         }
     )
 }

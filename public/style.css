@@ -41,10 +41,10 @@ body.oppenheimer-theme {
 }
 
 body.github-theme {
-  --quiteALot: rgb(151 238 203);
-  --aLot: rgb(77 219 167);
-  --okay: rgb(5 150 105);
-  --meh: rgb(6 95 70);
+  --quiteALot: rgb(103, 237, 163);
+  --aLot: rgb(20, 199, 101);
+  --okay: rgb(0, 129, 58);
+  --meh: rgb(0, 90, 40);
 }
 
 
@@ -95,15 +95,33 @@ a {
 }
 
 .calendar-week {
-    width: 15px;
+    width: 14px;
     display: inline-block;
 }
 
 .calendar-day {
     width: 10px;
     height: 10px;
-    margin: 8px;
+    margin: 4px;
     border-radius: 2px;
+}
+
+/* FULLY COMPACT SIZE */
+body.fully-compact-size .calendar-week {
+  width: auto;
+}
+body.fully-compact-size .calendar-day {
+  margin: 0;
+  border-radius: 0px;
+}
+
+/* COMPACT SIZE */
+body.compact-size .calendar-week {
+  width: 12px;
+}
+body.compact-size .calendar-day {
+  margin: 2px;
+  border-radius: 1px;
 }
 
 .calendar-day.quiteALot {

@@ -7,11 +7,14 @@ pub struct PageProps<'a> {
     children: Element<'a>,
     #[props(optional)]
     theme: Option<&'a str>,
+    #[props(optional)]
+    size: Option<&'a str>,
 }
 
 #[allow(non_snake_case)]
 pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
     let theme = cx.props.theme.unwrap_or_default();
+    let size = cx.props.size.unwrap_or_default();
     render!(
         head {
             title {
@@ -35,7 +38,7 @@ pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
             }
         }
         body {
-            class: "{theme}-theme",
+            class: "{theme}-theme {size}-size",
             div {
                 class: "body-content",
                 &cx.props.children

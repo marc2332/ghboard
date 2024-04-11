@@ -68,6 +68,7 @@ async fn user_endpoint(
     Query(mut params): Query<HashMap<String, String>>,
 ) -> response::Result<Html<String>> {
     let theme = params.remove("theme").unwrap_or("github".to_string());
+    let size = params.remove("size").unwrap_or("normal".to_string());
     let key = format!("user_{user}");
     let user_data = state.persist.load::<UserData>(&key);
     let now = Utc::now();
@@ -101,6 +102,7 @@ async fn user_endpoint(
             user_data: new_user_data.unwrap(),
             user,
             theme,
+            size,
         },
     );
     let _ = app.rebuild();
