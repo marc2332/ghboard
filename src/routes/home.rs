@@ -15,7 +15,7 @@ pub fn home_route(cx: Scope<HomeRouteProps>) -> Element {
                 }
                 p {
                     class: "subtitle",
-                    "GitHub dashboard written in Rust🦀, made using Dioxus SSR 🧬, hosted in Shuttle 🚀 and powered by the GitHub GraphQL API 🦑."
+                    "GitHub dashboard written in Rust🦀, made using Dioxus SSR 🧬, hosted in Fly.io 🎈 and powered by the GitHub GraphQL API 🦑."
                 }
                 b {
                     "Don't forget to star the ",

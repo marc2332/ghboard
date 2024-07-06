@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::{
-    cache::UserData,
-    client::{ContributionsCollection, GhDay, GhWeek},
+    client::{ContributionsCollection, GhDay, GhWeek, UserData},
     components::page::Page,
 };
 

@@ -3,18 +3,19 @@ mod client;
 mod components;
 mod routes;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
-use cache::{get_user_data, UserData};
+use cache::Cache;
 use chrono::Utc;
+use client::get_user_data;
 use routes::{
     home::{home_route, HomeRouteProps},
     users::{user_route, UserRouteProps},
 };
-use shuttle_persist::PersistInstance;
-use shuttle_secrets::SecretStore;
+
 use std::path::PathBuf;
-use tracing::info;
+use tracing::{info, level_filters::LevelFilter};
+use tracing_subscriber::EnvFilter;
 
 use axum::{
     extract::{Path, Query, State},
@@ -28,29 +29,33 @@ use tower_http::services::ServeDir;
 
 #[derive(Clone)]
 struct ApiState {
-    persist: PersistInstance,
     token: String,
 }
 
-#[shuttle_runtime::main]
-async fn axum(
-    #[shuttle_secrets::Secrets] secret_store: SecretStore,
-    #[shuttle_persist::Persist] persist: PersistInstance,
-) -> shuttle_axum::ShuttleAxum {
-    dotenv().ok();
-    let token = secret_store
-        .get("GITHUB_TOKEN")
-        .expect("GITHUB_TOKEN env variable is required");
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env()
+                .unwrap()
+                .add_directive("ghboard=debug".parse().unwrap()),
+        )
+        .init();
 
-    let state = ApiState { token, persist };
+    dotenv().ok();
+    let token = env::var("GITHUB_TOKEN").unwrap();
+
+    let state = ApiState { token };
 
     let router = Router::new()
         .route("/", get(home_endpoint))
         .nest_service("/public", ServeDir::new(PathBuf::from("public")))
         .route("/user/:user", get(user_endpoint))
         .with_state(state);
-
-    Ok(router.into())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    axum::serve(listener, router).await.unwrap();
 }
 
 async fn home_endpoint() -> response::Result<Html<String>> {
@@ -70,36 +75,34 @@ async fn user_endpoint(
     let theme = params.remove("theme").unwrap_or("github".to_string());
     let size = params.remove("size").unwrap_or("normal".to_string());
     let key = format!("user_{user}");
-    let user_data = state.persist.load::<UserData>(&key);
     let now = Utc::now();
 
-    let mut new_user_data: Option<UserData> = None;
-
-    if let Ok(user_data) = user_data {
-        if now.timestamp_millis() - user_data.created_at.timestamp_millis() < ONE_HOUR {
-            new_user_data = Some(user_data);
-            info!("Retrieved cached data for user {key}");
+    let user_data = {
+        let cached_user_data = if let Some(user_data) = Cache::get(&key) {
+            if now.timestamp_millis() - user_data.created_at.timestamp_millis() < ONE_HOUR {
+                info!("Retrieved cached data for user {key}");
+                Some(user_data)
+            } else {
+                info!("Cached data for user {key} is too old");
+                None
+            }
         } else {
-            info!("Cached data for user {key} is too old");
-        }
-    } else {
-        info!("Cached data of user {key} is invalid");
-    }
-
-    if new_user_data.is_none() {
-        let data = get_user_data(&user, state.token).await?;
-        if let Err(err) = state.persist.save(&key, data.clone()) {
-            info!("Failed caching data for user {key}: {err}");
+            info!("Cached data of user {key} is invalid");
+            None
+        };
+        if let Some(cached_user_data) = cached_user_data {
+            cached_user_data
         } else {
-            info!("Cached data for user {key}");
+            let data = get_user_data(&user, state.token).await?;
+            Cache::set(&key, data.clone());
+            data
         }
-        new_user_data = Some(data)
-    }
+    };
 
     let mut app = VirtualDom::new_with_props(
         user_route,
         UserRouteProps {
-            user_data: new_user_data.unwrap(),
+            user_data,
             user,
             theme,
             size,
