@@ -93,6 +93,7 @@ async fn user_endpoint(
         if let Some(cached_user_data) = cached_user_data {
             cached_user_data
         } else {
+            info!("Fetching data for user {key}");
             let data = get_user_data(&user, state.token).await?;
             Cache::set(&key, data.clone());
             data
