@@ -208,7 +208,7 @@ pub async fn get_user_data(user: &str, token: String) -> Result<UserData, ErrorR
 
     let now = Utc::now();
     let joined = date_with_just_year(
-        get_join_date(&client, user)
+        get_join_date(&client, user.trim())
             .await
             .map_err(|_| ErrorResponse::from("Something went wrong, try again."))?,
     )
