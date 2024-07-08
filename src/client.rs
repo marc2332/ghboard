@@ -136,7 +136,6 @@ pub async fn get_calendars(
         "
         ))
     }
-
     let req = format!(
         "
         {{
@@ -204,8 +203,8 @@ pub struct UserData {
 }
 
 pub async fn get_user_data(user: &str, token: String) -> Result<UserData, ErrorResponse> {
+    let user = user.trim();
     let client = Octocrab::builder().personal_token(token).build().unwrap();
-
     let now = Utc::now();
     let joined = date_with_just_year(
         get_join_date(&client, user)
