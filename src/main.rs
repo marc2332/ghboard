@@ -54,7 +54,7 @@ async fn main() {
         .nest_service("/public", ServeDir::new(PathBuf::from("public")))
         .route("/user/:user", get(user_endpoint))
         .with_state(state);
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:1235").await.unwrap();
     axum::serve(listener, router).await.unwrap();
 }
 
@@ -72,7 +72,12 @@ async fn user_endpoint(
     Path(user): Path<String>,
     Query(mut params): Query<HashMap<String, String>>,
 ) -> response::Result<Html<String>> {
-    let theme = params.remove("theme").unwrap_or("github".to_string());
+    let theme = match params.remove("theme").as_deref() {
+        Some(theme @ ("github" | "rust" | "javascript" | "go" | "mono" | "linux")) => {
+            theme.to_string()
+        }
+        _ => "github".to_string(),
+    };
     let size = params.remove("size").unwrap_or("normal".to_string());
     let key = format!("user_{user}");
     let now = Utc::now();

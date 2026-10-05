@@ -13,7 +13,7 @@ pub struct PageProps<'a> {
 
 #[allow(non_snake_case)]
 pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element<'a> {
-    let theme = cx.props.theme.unwrap_or_default();
+    let theme = cx.props.theme.unwrap_or("github");
     let size = cx.props.size.unwrap_or_default();
     render!(
         head {

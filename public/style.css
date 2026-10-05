@@ -1,5 +1,9 @@
 :root {
   --grey: rgb(24, 24, 27);
+  --contribution-hue: 145;
+  --contribution-saturation: 65%;
+  --contribution-min-lightness: 14%;
+  --contribution-lightness-range: 74%;
   font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -11,42 +15,31 @@ body {
     color: white;
 }
 
-body.halloween-theme {
-  --quiteALot: rgb(248 232 152);
-  --aLot: rgb(250 204 21);
-  --okay: rgb(202 138 4);
-  --meh: rgb(133 77 14);
+body.rust-theme {
+  --contribution-hue: 25;
+  --contribution-saturation: 85%;
 }
 
-body.winter-theme {
-  --quiteALot: rgb(191 219 254);
-  --aLot: rgb(96 165 250);
-  --okay: rgb(29 78 216);
-  --meh: rgb(30 58 138);
+body.javascript-theme {
+  --contribution-hue: 52;
+  --contribution-saturation: 85%;
 }
 
-body.barbie-theme {
-  --quiteALot: rgb(251 207 232);
-  --aLot: rgb(244 114 182);
-  --okay: rgb(190 24 93);
-  --meh: rgb(131 24 67);
+body.go-theme {
+  --contribution-hue: 195;
+  --contribution-saturation: 70%;
 }
 
-
-body.oppenheimer-theme {
-  --quiteALot: rgb(254 249 195);
-  --aLot: rgb(251 191 36);
-  --okay: rgb(194 65 12);
-  --meh: rgb(120 53 15);
+body.linux-theme {
+  --contribution-hue: 40;
+  --contribution-saturation: 75%;
 }
 
-body.github-theme {
-  --quiteALot: rgb(103, 237, 163);
-  --aLot: rgb(20, 199, 101);
-  --okay: rgb(0, 129, 58);
-  --meh: rgb(0, 90, 40);
+body.mono-theme {
+  --contribution-saturation: 0%;
+  --contribution-min-lightness: 20%;
+  --contribution-lightness-range: 80%;
 }
-
 
 a {
   color: white;
@@ -124,27 +117,15 @@ body.compact-size .calendar-day {
   border-radius: 1px;
 }
 
-.calendar-day.quiteALot {
-  background-color: var(--quiteALot);
-}
-
-.calendar-day.aLot {
-  background-color: var(--aLot);
-}
-
-.calendar-day.okay {
-  background-color: var(--okay);
-}
-
-.calendar-day.meh {
-  background-color: var(--meh);
+.calendar-day.active {
+  background-color: hsl(var(--contribution-hue), var(--contribution-saturation), calc(var(--contribution-min-lightness) + var(--contribution-shade) * var(--contribution-lightness-range)));
 }
 
 .calendar-day.nothing {
   background-color: rgb(9 9 11);
 }
 
-.theme-link {
+.customization-link {
     margin-right: 8px;
     line-height: 24px;
 }

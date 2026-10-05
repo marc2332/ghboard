@@ -45,23 +45,24 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
                         "Themes: "
                     }
                     CustomizationLink { theme: "github", size: &cx.props.size, text: "🐙 GitHub" },
-                    CustomizationLink { theme: "winter", size: &cx.props.size, text: "🥶 Winter" },
-                    CustomizationLink { theme: "halloween", size: &cx.props.size, text: "🎃 Halloween" },
-                    CustomizationLink { theme: "barbie", size: &cx.props.size, text: "👸 Barbie" },
-                    CustomizationLink { theme: "oppenheimer", size: &cx.props.size, text: "💣 Oppenheimer" },
+                    CustomizationLink { theme: "rust", size: &cx.props.size, text: "🦀 Rust" },
+                    CustomizationLink { theme: "javascript", size: &cx.props.size, text: "🟨 JavaScript" },
+                    CustomizationLink { theme: "go", size: &cx.props.size, text: "🐹 Go" },
+                    CustomizationLink { theme: "mono", size: &cx.props.size, text: "⚪ Mono" },
+                    CustomizationLink { theme: "linux", size: &cx.props.size, text: "🐧 Linux" },
                 }
                 div {
                     class: "data-title",
                     span {
                         "Sizes: "
                     }
-                    CustomizationLink { size: "fully-compact", theme: &cx.props.theme, text: "🤏 Fully Compact" },
-                    CustomizationLink { size: "compact", theme: &cx.props.theme, text: "📦 Compact" },
-                    CustomizationLink { size: "normal", theme: &cx.props.theme, text: "👍 Normal" },
+                    CustomizationLink { theme: &cx.props.theme, size: "fully-compact", text: "🤏 Fully Compact" },
+                    CustomizationLink { theme: &cx.props.theme, size: "compact", text: "📦 Compact" },
+                    CustomizationLink { theme: &cx.props.theme, size: "normal", text: "👍 Normal" },
                 }
                 h4 {
                     class: "data-title",
-                    "{cx.props.user_data.last_year.contributionCalendar.totalContributions} contributions in the last year"
+                    "{cx.props.user_data.last_year.contributionCalendar.totalContributions} contributions in the last 365 days"
                 }
                 Calendar {
                     collection: cx.props.user_data.last_year.clone(),
@@ -85,13 +86,34 @@ pub fn user_route(cx: Scope<UserRouteProps>) -> Element {
 #[allow(non_snake_case)]
 #[inline_props]
 pub fn Calendar(cx: Scope, collection: ContributionsCollection) -> Element {
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let mut total_contributions = 0.0;
+    let mut day_count = 0;
+    for day in collection
+        .contributionCalendar
+        .weeks
+        .iter()
+        .flat_map(|week| &week.contributionDays)
+    {
+        if day.date <= today {
+            total_contributions += f64::from(day.contributionCount);
+            day_count += 1;
+        }
+    }
+    let average = if day_count > 0 {
+        total_contributions / f64::from(day_count)
+    } else {
+        0.0
+    };
+
     render!(
         div {
             class: "calendar",
             for week in &collection.contributionCalendar.weeks {
                 rsx!(
                     Week {
-                        week: week.clone()
+                        week: week.clone(),
+                        average: average,
                     }
                 )
             }
@@ -101,7 +123,7 @@ pub fn Calendar(cx: Scope, collection: ContributionsCollection) -> Element {
 
 #[allow(non_snake_case)]
 #[inline_props]
-pub fn Week(cx: Scope, week: GhWeek) -> Element {
+pub fn Week(cx: Scope, week: GhWeek, average: f64) -> Element {
     render!(
         div {
             class: "calendar-week",
@@ -109,12 +131,13 @@ pub fn Week(cx: Scope, week: GhWeek) -> Element {
                 if let Some(day) = week.contributionDays.iter().find(|day| day.weekday == day_n).cloned() {
                     rsx!(
                         Day {
-                            day: day
+                            day: day,
+                            average: *average,
                         }
                     )
                 } else {
                     rsx!(
-                        Day { }
+                        Day { average: *average }
                     )
                 }
             }
@@ -125,17 +148,24 @@ pub fn Week(cx: Scope, week: GhWeek) -> Element {
 #[derive(Props, PartialEq)]
 pub struct DayProps {
     day: Option<GhDay>,
+    average: f64,
 }
 
 #[allow(non_snake_case)]
 pub fn Day(cx: Scope<DayProps>) -> Element {
     if let Some(day) = &cx.props.day {
-        let color_class = match day.contributionCount {
-            i if i > 20 => "quiteALot",
-            i if i > 10 => "aLot",
-            i if i > 5 => "okay",
-            i if i > 0 => "meh",
-            _ => "nothing",
+        let relative_count = if cx.props.average > 0.0 {
+            f64::from(day.contributionCount) / cx.props.average
+        } else {
+            0.0
+        };
+        let intensity = relative_count.max(0.0) / (relative_count.max(0.0) + 1.0);
+        let shade = (intensity * 63.0).round();
+        let shade_fraction = shade / 63.0;
+        let color_class = if day.contributionCount > 0 {
+            "active"
+        } else {
+            "nothing"
         };
 
         let day_name = match day.weekday {
@@ -150,6 +180,7 @@ pub fn Day(cx: Scope<DayProps>) -> Element {
 
         render!(div {
             class: "calendar-day {color_class}",
+            style: "--contribution-shade: {shade_fraction}",
             title: "{day.contributionCount} contributions on {day_name}, {day.date}"
         })
     } else {
@@ -164,7 +195,7 @@ pub fn Day(cx: Scope<DayProps>) -> Element {
 fn CustomizationLink<'a>(cx: Scope, theme: &'a str, size: &'a str, text: &'a str) -> Element {
     render!(
         a {
-            class: "theme-link",
+            class: "customization-link",
             href: "?theme={theme}&size={size}",
             "{text}"
         }
