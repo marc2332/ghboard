@@ -54,7 +54,7 @@ async fn main() {
         .nest_service("/public", ServeDir::new(PathBuf::from("public")))
         .route("/user/:user", get(user_endpoint))
         .with_state(state);
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:1235").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     axum::serve(listener, router).await.unwrap();
 }
 
